@@ -3,6 +3,10 @@ import { Login } from "./components/login";
 import { Home } from "./components/home";
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  return loggedIn ? <Home /> : <Login onLogin={() => setLoggedIn(true)} />;
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  return currentUser ? (
+    <Home userId={currentUser} />
+  ) : (
+    <Login onLogin={(userId) => setCurrentUser(userId)} />
+  );
 }

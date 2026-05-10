@@ -1,19 +1,32 @@
 import { useState } from "react";
+import { USERS } from "../../data/users";
 
-export function Login({ onLogin }: { onLogin: () => void }) {
+export function Login({ onLogin }: { onLogin: (userId: string) => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-white">
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          onLogin();
+          const match = USERS.find(
+            (u) => u.username === username && u.password === password,
+          );
+          if (match) {
+            setError("");
+            onLogin(match.id);
+          } else {
+            setError("Usuario o contraseña incorrectos");
+          }
         }}
         className="flex flex-col gap-6 w-full max-w-sm px-8"
       >
         <div className="text-center tracking-widest text-black mb-4">BRAND</div>
+        {error && (
+          <div className="text-red-600 text-sm text-center">{error}</div>
+        )}
         <input
           type="text"
           placeholder="Username"

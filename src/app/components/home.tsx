@@ -61,7 +61,8 @@ const PRODUCTS: Product[] = [
   },
 ];
 
-export function Home() {
+export function Home({ userId }: { userId: string }) {
+  console.log("Active user:", userId);
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
