@@ -6,6 +6,7 @@ export type Product = {
   description: string;
   price: string;
   image: string;
+  category: string;
 };
 
 export function ProductCard({ product }: { product: Product }) {
