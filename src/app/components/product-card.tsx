@@ -4,7 +4,7 @@ export type Product = {
   id: string;
   name: string;
   description: string;
-  price: string;
+  price: number;
   image: string;
   category: string;
 };
@@ -22,7 +22,7 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="flex flex-col gap-1 px-1">
         <div className="font-bold text-black">{product.name}</div>
         <div className="text-[#888] text-sm">{product.description}</div>
-        <div className="text-black mt-1">{product.price}</div>
+        <div className="text-black mt-1">${product.price}</div>
       </div>
     </div>
   );

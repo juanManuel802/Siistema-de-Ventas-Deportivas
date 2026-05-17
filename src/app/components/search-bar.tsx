@@ -1,18 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
-const SUGGESTIONS = [
-  "Running shoes",
-  "Training jacket",
-  "Football boots",
-  "Classic sneakers",
-];
-
 export function SearchBar({
   value,
   onChange,
+  suggestions = [],
 }: {
   value: string;
   onChange: (v: string) => void;
+  suggestions?: string[];
 }) {
   const [active, setActive] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -39,7 +34,7 @@ export function SearchBar({
       />
       {active && (
         <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#e5e5e5] z-50">
-          {SUGGESTIONS.map((s) => (
+          {suggestions.map((s) => (
             <button
               key={s}
               type="button"
