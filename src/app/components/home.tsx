@@ -4,7 +4,7 @@ import { SearchBar } from "./search-bar";
 import { getRecommendations } from "../../data/recommendation";
 import { PRODUCTS } from "../../data/products";
 
-export function Home({ userId }: { userId: string }) {
+export function Home({ userId, onLogout }: { userId: string; onLogout: () => void }) {
   console.log("Active user:", userId);
   const [query, setQuery] = useState("");
 
@@ -40,6 +40,12 @@ export function Home({ userId }: { userId: string }) {
       <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-[#e5e5e5] z-40 flex items-center justify-between px-8">
         <div className="tracking-widest text-black">BRAND</div>
         <SearchBar value={query} onChange={setQuery} suggestions={searchSuggestions} />
+        <button
+          onClick={onLogout}
+          className="tracking-widest text-black bg-transparent border-none cursor-pointer text-sm hover:opacity-60 transition-opacity"
+        >
+          SIGN OUT
+        </button>
       </nav>
 
       <main className="pt-24 pb-16 px-8 max-w-7xl mx-auto">
