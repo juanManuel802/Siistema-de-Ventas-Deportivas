@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { ProductCard } from "./product-card";
+import type { Product } from "./product-card";
 import { SearchBar } from "./search-bar";
 import { getRecommendations } from "../../data/recommendation";
 import { PRODUCTS } from "../../data/products";
@@ -35,6 +36,11 @@ export function Home({ userId, onLogout }: { userId: string; onLogout: () => voi
     return suggestions;
   }, []);
 
+  // TODO: connect recommendation algorithm logic here
+  const onProductClick = useCallback((product: Product) => {
+    console.log("Product selected:", product.id, product.category);
+  }, []);
+
   return (
     <div className="min-h-screen w-full bg-white">
       <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-[#e5e5e5] z-40 flex items-center justify-between px-8">
@@ -51,7 +57,7 @@ export function Home({ userId, onLogout }: { userId: string; onLogout: () => voi
       <main className="pt-24 pb-16 px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard key={p.id} product={p} onClick={onProductClick} />
           ))}
         </div>
       </main>
