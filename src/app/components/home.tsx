@@ -1,27 +1,62 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { ProductCard } from "./product-card";
 import type { Product } from "./product-card";
 import { SearchBar } from "./search-bar";
-import { getRecommendations } from "../../data/recommendation";
+import {
+  getRecommendations,
+  cargarPesosIniciales,
+  type PesosCategoria,
+} from "../../data/recommendation";
 import { PRODUCTS } from "../../data/products";
 
 export function Home({ userId, onLogout }: { userId: string; onLogout: () => void }) {
-  console.log("Active user:", userId);
   const [query, setQuery] = useState("");
 
-  const recommended = useMemo(() => {
-    return getRecommendations(userId, PRODUCTS);
-  }, [userId]);
+  const getInitialPesos = (uid: string) => {
+    const saved = localStorage.getItem(`pesos_${uid}`);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // ignore JSON parse error
+      }
+    }
+    return cargarPesosIniciales(uid);
+  };
 
+  // Perfil del usuario evoluciona en memoria y se guarda en localStorage
+  const [pesos, setPesos] = useState<PesosCategoria>(() => getInitialPesos(userId));
+
+  // Orden inicial para mostrar, no cambia tras los clics hasta que se recargue la página.
+  const [initialOrder, setInitialOrder] = useState<Product[]>(() => 
+    getRecommendations(PRODUCTS, getInitialPesos(userId))
+  );
+
+  const [lastUserId, setLastUserId] = useState(userId);
+  if (lastUserId !== userId) {
+    setLastUserId(userId);
+    const newPesos = getInitialPesos(userId);
+    setPesos(newPesos);
+    setInitialOrder(getRecommendations(PRODUCTS, newPesos));
+  }
+
+  // Recomendaciones: se recalculan cada vez que cambian los pesos (ejecuta PageRank).
+  // Se mantiene para satisfacer la ejecución del algoritmo en background, 
+  // pero NO se usa para renderizar la grilla en vivo.
+  const recommended = useMemo(() => {
+    return getRecommendations(PRODUCTS, pesos);
+  }, [pesos]);
+
+  // Usamos el orden inicial congelado para filtrar y mostrar
   const filtered = useMemo(() => {
-    if (!query.trim()) return recommended;
+    if (!query.trim()) return initialOrder;
     const q = query.toLowerCase();
-    return recommended.filter(
+    return initialOrder.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q),
     );
-  }, [query, recommended]);
+  }, [query, initialOrder]);
 
   const searchSuggestions = useMemo(() => {
     const suggestions: string[] = [];
@@ -36,10 +71,18 @@ export function Home({ userId, onLogout }: { userId: string; onLogout: () => voi
     return suggestions;
   }, []);
 
-  // TODO: connect recommendation algorithm logic here
+  // Integración con el algoritmo: cada clic incrementa el peso de la categoría
+  // y lo persiste en localStorage para la próxima recarga.
   const onProductClick = useCallback((product: Product) => {
-    console.log("Product selected:", product.id, product.category);
-  }, []);
+    setPesos((prev) => {
+      const newPesos = {
+        ...prev,
+        [product.category]: (prev[product.category] ?? 0) + 0.01,
+      };
+      localStorage.setItem(`pesos_${userId}`, JSON.stringify(newPesos));
+      return newPesos;
+    });
+  }, [userId]);
 
   return (
     <div className="min-h-screen w-full bg-white">
