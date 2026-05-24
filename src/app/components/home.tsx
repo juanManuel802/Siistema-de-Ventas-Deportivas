@@ -1,62 +1,42 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { ProductCard } from "./product-card";
 import type { Product } from "./product-card";
 import { SearchBar } from "./search-bar";
 import {
   getRecommendations,
   cargarPesosIniciales,
-  type PesosCategoria,
+  leerPerfilPersistido,
+  guardarPerfilPersistido,
 } from "../../data/recommendation";
 import { PRODUCTS } from "../../data/products";
 
 export function Home({ userId, onLogout }: { userId: string; onLogout: () => void }) {
   const [query, setQuery] = useState("");
 
-  const getInitialPesos = (uid: string) => {
-    const saved = localStorage.getItem(`pesos_${uid}`);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // ignore JSON parse error
-      }
+  // ── Cálculo de PageRank ──────────────────────────────────────────────────
+  // Se ejecuta UNA SOLA VEZ por montaje de Home (o cuando cambia userId).
+  // Lee el perfil de localStorage; si no existe, usa el CSV como semilla y
+  // lo persiste de inmediato para futuras sesiones.
+  const recommended = useMemo<Product[]>(() => {
+    let pesos = leerPerfilPersistido(userId);
+    if (!pesos) {
+      pesos = cargarPesosIniciales(userId);
+      guardarPerfilPersistido(userId, pesos);
     }
-    return cargarPesosIniciales(uid);
-  };
-
-  // Perfil del usuario evoluciona en memoria y se guarda en localStorage
-  const [pesos, setPesos] = useState<PesosCategoria>(() => getInitialPesos(userId));
-
-  // Orden inicial para mostrar, no cambia tras los clics hasta que se recargue la página.
-  const [initialOrder, setInitialOrder] = useState<Product[]>(() => 
-    getRecommendations(PRODUCTS, getInitialPesos(userId))
-  );
-
-  const [lastUserId, setLastUserId] = useState(userId);
-  if (lastUserId !== userId) {
-    setLastUserId(userId);
-    const newPesos = getInitialPesos(userId);
-    setPesos(newPesos);
-    setInitialOrder(getRecommendations(PRODUCTS, newPesos));
-  }
-
-  // Recomendaciones: se recalculan cada vez que cambian los pesos (ejecuta PageRank).
-  // Se mantiene para satisfacer la ejecución del algoritmo en background, 
-  // pero NO se usa para renderizar la grilla en vivo.
-  const recommended = useMemo(() => {
     return getRecommendations(PRODUCTS, pesos);
-  }, [pesos]);
+  }, [userId]);
 
-  // Usamos el orden inicial congelado para filtrar y mostrar
+  // ── Filtrado por búsqueda ────────────────────────────────────────────────
+  // Opera sobre el orden congelado de `recommended`; no dispara PageRank.
   const filtered = useMemo(() => {
-    if (!query.trim()) return initialOrder;
+    if (!query.trim()) return recommended;
     const q = query.toLowerCase();
-    return initialOrder.filter(
+    return recommended.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q),
     );
-  }, [query, initialOrder]);
+  }, [query, recommended]);
 
   const searchSuggestions = useMemo(() => {
     const suggestions: string[] = [];
@@ -71,18 +51,20 @@ export function Home({ userId, onLogout }: { userId: string; onLogout: () => voi
     return suggestions;
   }, []);
 
-  // Integración con el algoritmo: cada clic incrementa el peso de la categoría
-  // y lo persiste en localStorage para la próxima recarga.
-  const onProductClick = useCallback((product: Product) => {
-    setPesos((prev) => {
-      const newPesos = {
-        ...prev,
-        [product.category]: (prev[product.category] ?? 0) + 0.01,
+  // ── Handler de clic ──────────────────────────────────────────────────────
+  // Solo actualiza localStorage (sin setState → sin re-render).
+  // El nuevo orden será visible en la próxima carga de página.
+  const onProductClick = useCallback(
+    (product: Product) => {
+      const current = leerPerfilPersistido(userId) ?? cargarPesosIniciales(userId);
+      const updated = {
+        ...current,
+        [product.category]: (current[product.category] ?? 0) + 0.3,
       };
-      localStorage.setItem(`pesos_${userId}`, JSON.stringify(newPesos));
-      return newPesos;
-    });
-  }, [userId]);
+      guardarPerfilPersistido(userId, updated);
+    },
+    [userId],
+  );
 
   return (
     <div className="min-h-screen w-full bg-white">

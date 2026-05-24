@@ -127,3 +127,32 @@ export function getRecommendations(
 
   return indices.map(i => products[i]);
 }
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Persistencia del perfil de usuario en localStorage
+// ─────────────────────────────────────────────────────────────────────────────
+
+const STORAGE_KEY_PREFIX = 'pagerank_pesos_';
+
+/**
+ * Lee el perfil persistido de `localStorage` para el usuario dado.
+ * Devuelve null si no existe ninguna entrada o si el JSON está corrupto.
+ */
+export function leerPerfilPersistido(userId: string): PesosCategoria | null {
+  try {
+    const raw = localStorage.getItem(`${STORAGE_KEY_PREFIX}${userId}`);
+    if (!raw) return null;
+    return JSON.parse(raw) as PesosCategoria;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Guarda los pesos del usuario en `localStorage` bajo la clave
+ * `pagerank_pesos_<userId>`.
+ */
+export function guardarPerfilPersistido(userId: string, pesos: PesosCategoria): void {
+  localStorage.setItem(`${STORAGE_KEY_PREFIX}${userId}`, JSON.stringify(pesos));
+}

@@ -1,1 +1,0 @@
-const m = import.meta.glob('./user-behavior/*.csv', { query: '?raw', import: 'default', eager: true }); console.log(m);
