@@ -59,7 +59,7 @@ export function Home({ userId, onLogout }: { userId: string; onLogout: () => voi
       const current = leerPerfilPersistido(userId) ?? cargarPesosIniciales(userId);
       const updated = {
         ...current,
-        [product.category]: (current[product.category] ?? 0) + 0.3,
+        [product.category]: (current[product.category] ?? 0) + 0.8,
       };
       guardarPerfilPersistido(userId, updated);
     },

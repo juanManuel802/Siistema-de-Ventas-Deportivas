@@ -45,12 +45,6 @@ export type Vector = number[];
  */
 const ALPHA_DEFAULT = 0.85;
 
-/** Tolerancia de convergencia del método de potencias. */
-const EPSILON_DEFAULT = 1e-9;
-
-/** Número máximo de iteraciones del método de potencias. */
-const MAX_ITER_DEFAULT = 1000;
-
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PASO 1 — MATRIZ DE CONECTIVIDAD  A
@@ -209,7 +203,8 @@ export function construirMatrizGoogle(
  *
  *     π* · Q = π*       y       Σ π*[i] = 1
  *
- * El algoritmo se detiene cuando ‖π_{k+1} − π_k‖_∞ < ε.
+ * Según el Apéndice A de la tesis, la iteración se realiza un número
+ * fijo de 100 pasos (i = 100), es decir, π = π_0 · Q^100, sin verificar convergencia.
  *
  * Inicialización: π_0 = e/N (distribución uniforme), que es la elección
  * estándar y la usada por la tesis en su simulación (Apéndice A, donde
@@ -218,20 +213,17 @@ export function construirMatrizGoogle(
  *
  * @param Q        Matriz de Google.
  * @param N        Orden de la matriz.
- * @param epsilon  Tolerancia de convergencia.
- * @param maxIter  Número máximo de iteraciones.
  * @returns        Vector PageRank π (distribución estacionaria).
  */
 export function metodoDePotencias(
     Q: Matrix,
     N: number,
-    epsilon: number = EPSILON_DEFAULT,
-    maxIter: number = MAX_ITER_DEFAULT,
 ): Vector {
     // π_0 = e/N  (distribución uniforme inicial)
     let pi: Vector = Array(N).fill(1 / N);
 
-    for (let k = 0; k < maxIter; k++) {
+    // Iterar exactamente 100 veces (i = 100)
+    for (let k = 0; k < 100; k++) {
         // π_{k+1} = π_k · Q   (multiplicación vector fila por matriz)
         const pi_next: Vector = Array(N).fill(0);
         for (let j = 0; j < N; j++) {
@@ -240,15 +232,7 @@ export function metodoDePotencias(
             pi_next[j] = suma;
         }
 
-        // Criterio de convergencia: ‖π_{k+1} − π_k‖_∞ < ε
-        let diff = 0;
-        for (let i = 0; i < N; i++) {
-            const d = Math.abs(pi_next[i] - pi[i]);
-            if (d > diff) diff = d;
-        }
-
         pi = pi_next;
-        if (diff < epsilon) break;
     }
 
     return pi;
